@@ -1,0 +1,108 @@
+Reproducible Research: Peer Assessment 1
+==============================================
+
+```{r foo, echo=TRUE}
+## Loading and preprocessing the data
+activity <- read.csv(".\\activity.csv")
+```
+
+## What is mean total number of steps taken per day?
+```{r fig.height=10,fig.width=15,echo=TRUE}
+stepsum <- tapply(activity$steps,activity$date,sum, na.rm=TRUE)
+
+par(mar = c(6, 4, 2, 1))
+barplot(stepsum, main="Total number of steps taken per day", las=2, col="blue")
+```
+
+### The mean of total number of steps taken per day
+```{r}
+stepavg <- tapply(activity$steps,activity$date,mean, na.rm=TRUE)
+df <- data.frame(Date=names(stepavg),Avg=stepavg)
+print(df,row.names=FALSE)
+```
+
+### The median of total number of steps taken per day
+```{r}
+stepmedian <- tapply(activity$steps,activity$date,median,na.rm = FALSE)
+dfmedian <- data.frame(Date=names(stepmedian),Median=stepmedian)
+print(dfmedian,row.names=FALSE)
+```
+
+## What is the average daily activity pattern?
+```{r fig.height=10,fig.width=10,echo=TRUE}
+
+par(pch=22, col="blue")
+par(mar = c(6, 4, 2, 1))
+plot(as.Date(df$Date,'%Y-%m-%d'), df$Avg, ylab= "average number of steps", type='l', col='blue', xaxt='n', ann=FALSE) 
+
+```
+
+### Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+```{r}
+maxdf <- max(df$Avg, na.rm=TRUE)
+maxstep <- subset(df, df$Avg == maxdf)
+print(maxstep[1][1],row.names=FALSE)
+```
+
+
+## Imputing missing values
+### The total number of missing values in the dataset
+```{r}
+sum(is.na(activity$steps))
+```
+
+### Filling all missing value with the mean for that day
+```{r fig.height=10,fig.width=15,echo=TRUE}
+intervalmean <- mean(activity$steps,na.rm=TRUE)
+newactivity <- activity
+for(i in 1:length(newactivity$steps)){
+  if(is.na(newactivity[i,1])){
+    newactivity[i,1] <- intervalmean
+  }
+}
+
+newstepsum <- tapply(newactivity$steps,newactivity$date,sum, na.rm=TRUE)
+
+par(mar = c(6, 4, 2, 1))
+barplot(newstepsum, main="Total number of steps taken per day", las=2, col="blue")
+```
+
+### The mean of total number of steps taken per day
+```{r}
+newstepavg <- tapply(newactivity$steps,newactivity$date,mean, na.rm=TRUE)
+newdf <- data.frame(Date=names(newstepavg),Avg=newstepavg)
+print(newdf,row.names=FALSE)
+```
+
+### The median of total number of steps taken per day
+```{r}
+newstepmedian <- tapply(newactivity$steps,newactivity$date,median,na.rm = FALSE)
+newdfmedian <- data.frame(Date=names(newstepmedian),Median=newstepmedian)
+print(newdfmedian,row.names=FALSE)
+
+#### The median value is different from the first part of the assignment.
+```
+
+## Are there differences in activity patterns between weekdays and weekends?
+```{r fig.height=10,fig.width=10,echo=TRUE}
+Sys.setlocale("LC_TIME","English")
+newdata <- newactivity
+newdata["weekday"] <- weekdays(as.Date(newdata[,2]))
+weekday <- subset(newdata,newdata$weekday %in% c('Monday','Tuesday','Wednesday','Thursday','Friday'), select=c(steps,date))
+weekend <- subset(newdata,newdata$weekday %in% c('Saturday','Sunday'), select=c(steps,date))
+
+weekdayavg <- tapply(weekday$steps,weekday$date,mean, na.rm=TRUE)
+dfweekday <- data.frame(Date=names(weekdayavg),Avg=weekdayavg)
+
+weekendavg <- tapply(weekend$steps,weekend$date,mean, na.rm=TRUE)
+dfweekend <- data.frame(Date=names(weekendavg),Avg=weekendavg)
+
+par(pch=22, col="blue")
+par(mar = c(6, 4, 2, 1), mfrow = c(2,1))
+
+plot(as.Date(dfweekend$Date,'%Y-%m-%d'), dfweekend$Avg, ylab= "average number of steps", type='l', col='blue', xaxt='n', xlab="interval", main="Weekend")
+
+plot(as.Date(dfweekday$Date,'%Y-%m-%d'), dfweekday$Avg, ylab= "average number of steps", type='l', col='blue', xlab="interval", xaxt='n', main="Weekday") 
+
+
+```
